@@ -26,17 +26,15 @@ contract Pets {
         _;
     }
     struct ai {
-        mapping (uint256 => mapping(string => uint256)) a;
-        mapping (string => uint256) b;
-        mapping (uint256 => bool) c;
-        mapping (uint256 => bool) d;
+        mapping (uint256 => mapping (uint256 => mapping(uint256 => string))) a;
         address owner;
+        uint256 current_str;
     }
     ai[] AIs;
     function add_blank_pet(address pet_owner, uint256 genetics, string memory name) public onlyParent returns (bool success) {
         uint256[] memory d;
         uint256 id = uint256(uint(keccak256(abi.encodePacked(id_seed))));
-        ai memory brain = ai(pet_owner);
+        ai memory brain = ai(pet_owner, 0);
         pet memory p = pet(id, genetics, d, name, pet_owner);
         uint256[] storage owned_pets = ownership[pet_owner];
         pets.push(p);
@@ -56,6 +54,16 @@ contract Pets {
     function add_attribute(uint256 attribte, uint256 index) public onlyParent returns (bool success) {
         pets[index].add_ons.push(attribte);
         return true;
+    }
+    function update_ai_dataset(uint256 index, string memory data, uint256 conclusion, uint256 scoring) public returns (bool success) {
+        require(msg.sender == AIs[index].owner);
+        AIs[index].a[scoring][AIs[index].current_str][conclusion] = data;
+        AIs[index].current_str += 1;
+        return true;
+    }
+    function fetch_ai_data(uint256 index, uint256 conclusion, uint256 scoring) public view returns (string memory data) {
+        string memory d = AIs[index].a[scoring][AIs[index].current_str][conclusion];
+        return d;
     }
     function check_pet_id(uint256 index) public view returns(uint256 res) {
         return pets[index].ID;
@@ -86,5 +94,4 @@ contract Pets {
     function list_attributes(uint256 index) public view returns(uint256[] memory attributes) {
         return pets[index].add_ons;
     }
-    //next is the AI interface
 } 
