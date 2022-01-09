@@ -1,5 +1,4 @@
 # PolyDoge-NFT-game
-contracts for PolyDoge's NFT game.
  ----------------------------------
  # how to connect to the network:
  1. download geth at https://geth.ethereum.org/downloads/
