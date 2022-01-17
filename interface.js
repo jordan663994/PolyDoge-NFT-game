@@ -188,12 +188,17 @@ const abi = [
 			},
 			{
 				"internalType": "uint256",
-				"name": "conclusion",
+				"name": "dir1",
 				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "scoring",
+				"name": "dir2",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dir3",
 				"type": "uint256"
 			}
 		],
@@ -241,6 +246,11 @@ const abi = [
 			},
 			{
 				"internalType": "uint256",
+				"name": "petIndex2",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
 				"name": "brainIndex",
 				"type": "uint256"
 			}
@@ -270,12 +280,17 @@ const abi = [
 			},
 			{
 				"internalType": "uint256",
-				"name": "conclusion",
+				"name": "dir1",
 				"type": "uint256"
 			},
 			{
 				"internalType": "uint256",
-				"name": "scoring",
+				"name": "dir2",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "dir3",
 				"type": "uint256"
 			}
 		],
@@ -291,15 +306,57 @@ const abi = [
 		"type": "function"
 	}
 ]
-Web3EthContract.setProvider('http://0.0.0.0:7545');
-const contract = new Web3EthContract(abi, "0xD5DECD434Eba7e0872941AD45deEdc35a60dC8D2");
+Web3EthContract.setProvider('http://127.0.0.1:9656');
+const Web3 = require("web3")
+const web3 = new Web3('http://127.0.0.1:9656')
+const contract = new Web3EthContract(abi, '<NFT CONTRACT ADDRESS>');
+
 var a;
 var a2;
+var a3
 var b = (c) => {
   a = c
 }
 var b2 = (c) => {
   a2 = c
+}
+function b3 (c) {
+	a3 = c
+}
+web3.eth.personal.importRawKey("<PRIVATE KEY OF THE ACCOUNT THAT OWNS THE NFT>", "password")
+async function write_ai(req) {
+	web3.eth.personal.unlockAccount("<ADDRESS OF THE ACCOUNT THAT OWNS THE NFT>", "password")
+	console.log(req[0], req[1], req[2], req[3], req[4])
+	contract.methods.update_ai_dataset(index=req[0], data=req[1], dir1=req[2], dir2=req[3], dir3=req[4]).send({from: "<ADDRESS OF THE ACCOUNT THAT OWNS THE NFT>", gasPrice: 100000000, gas: 10000000})
+}
+async function read_ai(req) {
+	var out = await contract.methods.fetch_ai_data(req[0], req[1], req[2], req[3]).call()
+	return out
+}
+function parse_body(body) {
+	var out = []
+	var j = ""
+	var i = 0
+
+	while (i <= body.length){
+		if (body[i] == "&") {
+			out.push(j)
+			j = ""
+			i += 1
+		}
+		else {
+			j += body[i]
+			i += 1
+		}
+	}
+	out2 = []
+	console.log(out)
+	for (var i = 0; i < out.length; i++) {
+		var s = out[i]
+		console.log(s)
+		out2.push(s.split("=")[1])
+	}
+	return out2
 }
 contract.methods.check_pet_genetics(1).call().then(b)
 contract.methods.check_pet_attributes(0).call().then(b2)
@@ -313,3 +370,30 @@ http.createServer(function(req, res) {
   res.write(a2.toString())
   res.end()
 }).listen(8080)
+http.createServer(function(req, res) {
+	res.writeHead(200)
+	body = ""
+	console.log("recieved")
+	req.on('data', chunk => {
+		body += chunk.toString()
+	})
+	req.on('end', () => {
+		write_ai(parse_body(body))
+		res.end()
+	})
+}).listen(8083)
+http.createServer(function(req, res) {
+	res.writeHead(200)
+	body = ""
+	console.log("recieved")
+	req.on('data', chunk => {
+		body += chunk.toString()
+		console.log(body)
+
+	})
+	req.on('end', async () => {
+		var out = await read_ai(parse_body(body))
+		res.write(out)
+		res.end()
+	})
+}).listen(8084)
