@@ -403,12 +403,14 @@ interface Icontroller {
 }
 contract exchange {
     Icontroller c;
-    constructor (address controller) public {
+    IERC20 t;
+    constructor (address controller, address PolyDoge) public {
         c = Icontroller(controller);
+        t = IERC20(PolyDoge);
     }
-    function buy() public payable returns (bool success) {
-        require(msg.value > 0);
-        require(c.mint(msg.sender, msg.value));
+    function buy(uint256 amount) public returns (bool success) {
+        require(t.transferFrom(msg.sender, <FUNDING RECIPIENT ADDRESS>, amount));
+        require(c.mint(msg.sender, amount));
         return true;
     }
 }
