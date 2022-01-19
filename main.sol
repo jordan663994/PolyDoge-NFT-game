@@ -327,6 +327,11 @@ contract NFT_control {
         uint256 a;
         uint256 price;
     }
+    struct cd {
+        uint256 start_time;
+        uint256 durration;
+    }
+    mapping(uint256 => cd) cooldown;
     asset[] assets;
     uint256 current_salt;
     uint256 price = 1000000000;
@@ -377,6 +382,33 @@ contract NFT_control {
         require(token.mint(account, amount));
         return true;
     }
-    //add breed function
+    uint256 breed_fee = 100000000;
+    function breed(uint256 index1, uint256 index2, string memory name) public returns (bool success) {
+        require(p.check_pet_owner(index1) == msg.sender);
+        require(p.check_pet_owner(index2) == msg.sender);
+        require(cooldown[index1].durration + cooldown[index1].start_time < uint256(block.number));
+        require(cooldown[index2].durration + cooldown[index2].start_time < uint256(block.number));
+        require(token.transferFrom(msg.sender, address(this), breed_fee));
+        uint256 genetics = p.check_pet_genetics(index1) + p.check_pet_genetics(index2);
+        require(p.add_blank_pet(msg.sender, genetics / 2, name));
+        cooldown[index1].durration += 1000;
+        cooldown[index1].start_time = uint256(block.number);
+        cooldown[index2].durration += 1000;
+        cooldown[index2].start_time = uint256(block.number);
+        return true;
+    }
 }
-//add a game contract
+interface Icontroller {
+    function mint(address account, uint256 amount) external returns (bool success);
+}
+contract exchange {
+    Icontroller c;
+    constructor (address controller) public {
+        c = Icontroller(controller);
+    }
+    function buy() public payable returns (bool success) {
+        require(msg.value > 0);
+        require(c.mint(msg.sender, msg.value));
+        return true;
+    }
+}
